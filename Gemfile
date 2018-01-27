@@ -19,6 +19,9 @@ gem 'connection_pool', '~> 2.2.1'
 # Sidekiq for background jobs
 gem 'sidekiq', '~> 5.0.5'
 
+# For json
+gem 'json-schema', '~> 2.8.0'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
