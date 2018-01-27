@@ -1,0 +1,10 @@
+development:
+  connection_string: 'redis://127.0.0.1:6379'
+  namespace: 'dev'
+
+test:
+  connection_string: 'redis://127.0.0.1:6379'
+  namespace: 'test'
+
+production:
+  connection_string: 'redis://127.0.0.1:6379'
