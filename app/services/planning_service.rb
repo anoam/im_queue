@@ -18,14 +18,14 @@ class PlanningService
 
   private
   attr_reader :params
-  delegate :receivers, to: :params
+  delegate :receivers, :send_at, to: :params
 
   def plan
     return if errors?
 
     receivers.each do |receiver_data|
       send_queue.perform_in(
-          Time.parse(params.send_at),
+          send_at,
           receiver_data.im,
           receiver_data.identifier,
           params.message
@@ -37,7 +37,6 @@ class PlanningService
     errors = []
 
     errors.push('invalid messsage') unless params.message.present?
-    errors.push('invalid send time') if time.nil?
 
     errors
   end
@@ -66,9 +65,4 @@ class PlanningService
     SendingWorker
   end
 
-  def time
-    @time ||= Time.parse(params.send_at)
-  rescue ArgumentError
-    nil
-  end
 end

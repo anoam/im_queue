@@ -19,7 +19,7 @@ class ApplicationController::PlanForm
   def send_at
     raise InvalidSchema unless valid?
 
-    raw_data[:send_at]
+    @send_at ||= Time.parse(raw_data[:send_at])
   end
 
   def receivers
@@ -43,7 +43,7 @@ class ApplicationController::PlanForm
       required: %i(message receivers send_at),
       properties: {
         message: { type: 'string' },
-        send_at: { type: 'string' },
+        send_at: { type: 'string', format: 'date-time' },
         receivers: {
           type: 'array',
           items:

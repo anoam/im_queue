@@ -24,46 +24,48 @@ RSpec.describe ApplicationController, type: :controller do
 
   describe '#POST plan' do
 
-    it 'fails on empty parameters' do
-      post :plan
-      expect(errors).to include('invalid data')
-      expect(status).to eql(400)
-    end
+    describe 'when params are invalid' do
+      it 'fails on empty parameters' do
+        post :plan
+        expect(errors).to include('invalid data')
+        expect(status).to eql(400)
+      end
 
-    it 'fails on invalid' do
-      post :plan, params: { foo: "bar", baz: "fizz" }
+      it 'fails on invalid' do
+        post :plan, params: { foo: "bar", baz: "fizz" }
 
-      expect(errors).to include('invalid data')
-      expect(status).to eql(400)
+        expect(errors).to include('invalid data')
+        expect(status).to eql(400)
+      end
+
+      it 'fails on invalid send time' do
+        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: 'not a time' }
+
+        expect(errors).to include('invalid data')
+        expect(status).to eql(400)
+      end
     end
 
     context 'when params are inconsistent' do
 
       it 'fails on unknown IM' do
-        post :plan, params: { message: 'My message', receivers: [{im: 'weired', identifier: 'foo'}], send_at: '2018-03-05 12:44' }
+        post :plan, params: { message: 'My message', receivers: [{im: 'weired', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
 
         expect(errors).to include('invalid IM')
         expect(status).to eql(422)
       end
 
       it 'fails on empty message' do
-        post :plan, params: { message: '', receivers: [{im: 'well_known', identifier: 'foo'}], send_at: '2018-03-05 12:44' }
+        post :plan, params: { message: '', receivers: [{im: 'well_known', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
 
         expect(errors).to include('invalid messsage')
         expect(status).to eql(422)
       end
 
       it 'fails on invalid identifier' do
-        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'invalid_identifier'}, {im: 'other', identifier: 'foo'}], send_at: '2018-03-05 12:44' }
+        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'invalid_identifier'}, {im: 'other', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
 
         expect(errors).to include('invalid identifier')
-        expect(status).to eql(422)
-      end
-
-      it 'fails on invalid send time' do
-        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: 'not a time' }
-
-        expect(errors).to include('invalid send time')
         expect(status).to eql(422)
       end
     end
@@ -71,21 +73,21 @@ RSpec.describe ApplicationController, type: :controller do
     context 'whe params valid' do
 
       it 'response with ok' do
-        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44' }
+        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' }
 
         expect(status).to eql(200)
         expect(json_response[:success]).to be_truthy
       end
 
       it 'creates tasks' do
-        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44' }
+        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' }
 
         tasks = SendingWorker.jobs
         expect(tasks.size).to eql(2)
 
-        expect(tasks.first["at"]).to eql(1520243040.0) # Time.parse('2018-03-05 12:44').to_f
+        expect(tasks.first["at"]).to eql(1520253840.0) # Time.parse('2018-03-05 12:44:00+00:00').to_f
         expect(tasks.first["args"]).to eql(['well_known', 'foo', 'Hello there!'])
-        expect(tasks.second["at"]).to eql(1520243040.0) # Time.parse('2018-03-05 12:44').to_f
+        expect(tasks.second["at"]).to eql(1520253840.0) # Time.parse('2018-03-05 12:44:00+00:00').to_f
         expect(tasks.second["args"]).to eql(['other', 'bar', 'Hello there!'])
       end
 
