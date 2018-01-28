@@ -18,16 +18,17 @@ class PlanningService
 
   private
   attr_reader :params
+  delegate :receivers, to: :params
 
   def plan
     return if errors?
 
     receivers.each do |receiver_data|
       send_queue.perform_in(
-          Time.parse(params[:send_at]),
-          receiver_data[:im],
-          receiver_data[:identifier],
-          params[:message]
+          Time.parse(params.send_at),
+          receiver_data.im,
+          receiver_data.identifier,
+          params.message
       )
     end
   end
@@ -35,7 +36,7 @@ class PlanningService
   def task_errors
     errors = []
 
-    errors.push('invalid messsage') unless params[:message].present?
+    errors.push('invalid messsage') unless params.message.present?
     errors.push('invalid send time') if time.nil?
 
     errors
@@ -56,9 +57,6 @@ class PlanningService
     errors.uniq
   end
 
-  def receivers
-    params[:receivers]
-  end
 
   def im_collection
     @im_collection ||= ImCollection.new
@@ -69,7 +67,7 @@ class PlanningService
   end
 
   def time
-    @time ||= Time.parse(params[:send_at])
+    @time ||= Time.parse(params.send_at)
   rescue ArgumentError
     nil
   end
