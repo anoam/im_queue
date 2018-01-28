@@ -1,15 +1,12 @@
 class ApplicationController < ActionController::API
 
   def plan
-    unless schema_validator.validate(schema, params.permit!.to_h)
+    unless schema_validator.validate(schema, planing_params)
       render json: { errors: ['invalid data'] }, status: :bad_request
       return
     end
-
-    errors = planning_service.plan(params)
-
-    unless errors.nil?
-      render json: { errors: errors }, status: :unprocessable_entity
+    if planning_service.errors?
+      render json: { errors: planning_service.errors }, status: :unprocessable_entity
       return
     end
 
@@ -19,7 +16,11 @@ class ApplicationController < ActionController::API
   private
 
   def planning_service
-    @planning_service ||= PlanningService.new
+    @planning_service ||= PlanningService.call(planing_params)
+  end
+
+  def planing_params
+    params.permit!.to_h
   end
 
   def schema_validator

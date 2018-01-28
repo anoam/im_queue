@@ -1,37 +1,47 @@
 class PlanningService
 
-  def plan(params)
-    errors = validate(params)
-    return errors if errors.any?
+  def self.call(params)
+    new(params).tap { |object| object.send(:plan)}
+  end
 
-    params[:receivers].each do |receiver_data|
-      send_queue.perform_in(
-        Time.parse(params[:send_at]),
-       receiver_data[:im],
-        receiver_data[:identifier],
-        params[:message]
-      )
-    end
+  def initialize(params)
+    @params = params
+  end
 
-    nil
+  def errors?
+    errors.any?
+  end
+
+  def errors
+    @errors ||= task_errors + receiver_errors
   end
 
   private
+  attr_reader :params
 
-  def validate(params)
+  def plan
+    return if errors?
+
+    receivers.each do |receiver_data|
+      send_queue.perform_in(
+          Time.parse(params[:send_at]),
+          receiver_data[:im],
+          receiver_data[:identifier],
+          params[:message]
+      )
+    end
+  end
+
+  def task_errors
     errors = []
 
     errors.push('invalid messsage') unless params[:message].present?
-    begin
-      Time.parse(params[:send_at])
-    rescue ArgumentError
-      errors.push('invalid send time')
-    end
+    errors.push('invalid send time') if time.nil?
 
-    errors + validate_receivers(params[:receivers])
+    errors
   end
 
-  def validate_receivers(receivers)
+  def receiver_errors
     errors = []
     receivers.each do |receiver|
       messenger = im_collection.messenger(receiver[:im])
@@ -46,11 +56,21 @@ class PlanningService
     errors.uniq
   end
 
+  def receivers
+    params[:receivers]
+  end
+
   def im_collection
     @im_collection ||= ImCollection.new
   end
 
   def send_queue
     SendingWorker
+  end
+
+  def time
+    @time ||= Time.parse(params[:send_at])
+  rescue ArgumentError
+    nil
   end
 end
