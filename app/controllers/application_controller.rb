@@ -6,9 +6,17 @@ class ApplicationController < ActionController::API
       return
     end
 
+    errors = planning_service.plan(params)
+    unless errors.nil?
+      render json: { errors: errors }, status: :unprocessable_entity
+    end
   end
 
   private
+
+  def planning_service
+    @planning_service ||= PlanningService.new
+  end
 
   def schema_validator
     JSON::Validator
