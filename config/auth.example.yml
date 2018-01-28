@@ -1,0 +1,7 @@
+development:
+  name: 'my_login'
+  password: 'my_password'
+
+test:
+  name: 'login'
+  password: 'password'
