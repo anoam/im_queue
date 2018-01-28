@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe ApplicationController, type: :controller do
+RSpec.describe ApplicationController, type: :request do
   let(:json_response) { JSON.parse(response.body, symbolize_names: true) }
   let(:errors) { json_response[:errors] }
   let(:status) { response.status }
@@ -18,7 +18,7 @@ RSpec.describe ApplicationController, type: :controller do
     allow(messenger_1).to receive(:identifier_valid?).with('invalid_identifier').and_return(false)
   end
 
-  after do # clear
+  after do
     SendingWorker.jobs.clear
   end
 
@@ -26,20 +26,20 @@ RSpec.describe ApplicationController, type: :controller do
 
     describe 'when params are invalid' do
       it 'fails on empty parameters' do
-        post :plan
+        post "/plan"
         expect(errors).to include('invalid data')
         expect(status).to eql(400)
       end
 
       it 'fails on invalid' do
-        post :plan, params: { foo: "bar", baz: "fizz" }
+        post "/plan", params: { foo: "bar", baz: "fizz" }
 
         expect(errors).to include('invalid data')
         expect(status).to eql(400)
       end
 
       it 'fails on invalid send time' do
-        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: 'not a time' }
+        post "/plan", params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: 'not a time' }
 
         expect(errors).to include('invalid data')
         expect(status).to eql(400)
@@ -49,21 +49,21 @@ RSpec.describe ApplicationController, type: :controller do
     context 'when params are inconsistent' do
 
       it 'fails on unknown IM' do
-        post :plan, params: { message: 'My message', receivers: [{im: 'weired', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
+        post "/plan", params: { message: 'My message', receivers: [{im: 'weired', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
 
         expect(errors).to include('invalid IM')
         expect(status).to eql(422)
       end
 
       it 'fails on empty message' do
-        post :plan, params: { message: '', receivers: [{im: 'well_known', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
+        post "/plan", params: { message: '', receivers: [{im: 'well_known', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
 
         expect(errors).to include('invalid messsage')
         expect(status).to eql(422)
       end
 
       it 'fails on invalid identifier' do
-        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'invalid_identifier'}, {im: 'other', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
+        post "/plan", params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'invalid_identifier'}, {im: 'other', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
 
         expect(errors).to include('invalid identifier')
         expect(status).to eql(422)
@@ -73,14 +73,14 @@ RSpec.describe ApplicationController, type: :controller do
     context 'whe params valid' do
 
       it 'response with ok' do
-        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' }
+        post "/plan", params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' }
 
         expect(status).to eql(200)
         expect(json_response[:success]).to be_truthy
       end
 
       it 'creates tasks' do
-        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' }
+        post "/plan", params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' }
 
         tasks = SendingWorker.jobs
         expect(tasks.size).to eql(2)
