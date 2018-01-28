@@ -1,5 +1,6 @@
 class SendingService
-  UnableToSendError = Class.new(StandardError)
 
-
+  def self.call(messenger, identifier, message)
+    
+  end
 end
