@@ -22,24 +22,50 @@ RSpec.describe ApplicationController, type: :request do
     SendingWorker.jobs.clear
   end
 
-  describe '#POST plan' do
+  before { Rails.application.auth = { name: 'login', passowrd: 'password' } }
 
-    describe 'when params are invalid' do
+  describe '#POST plan' do
+    let(:headers) { { Authorization: "Basic bG9naW46cGFzc3dvcmQ=" } }
+
+    describe "bad authorization" do
+      it "fails withaout auth" do
+        post(
+          "/plan",
+          params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' },
+        )
+        expect(status).to eql(401)
+      end
+
+      it 'fails with invalid params' do
+        post(
+          "/plan",
+          params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' },
+          headers: { Authorization: "Basic bG9naW46aW52YWxpZA==" } # password == 'invalid'
+        )
+        expect(status).to eql(401)
+      end
+    end
+
+    context 'when params are invalid' do
       it 'fails on empty parameters' do
-        post "/plan"
+        post "/plan", headers: headers
         expect(errors).to include('invalid data')
         expect(status).to eql(400)
       end
 
       it 'fails on invalid' do
-        post "/plan", params: { foo: "bar", baz: "fizz" }
+        post "/plan", params: { foo: "bar", baz: "fizz" }, headers: headers
 
         expect(errors).to include('invalid data')
         expect(status).to eql(400)
       end
 
       it 'fails on invalid send time' do
-        post "/plan", params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: 'not a time' }
+        post(
+          "/plan",
+          params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: 'not a time' },
+          headers: headers
+        )
 
         expect(errors).to include('invalid data')
         expect(status).to eql(400)
@@ -49,21 +75,34 @@ RSpec.describe ApplicationController, type: :request do
     context 'when params are inconsistent' do
 
       it 'fails on unknown IM' do
-        post "/plan", params: { message: 'My message', receivers: [{im: 'weired', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
+        post(
+          "/plan",
+          params: { message: 'My message', receivers: [{im: 'weired', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' },
+          headers: headers
+        )
+
 
         expect(errors).to include('invalid IM')
         expect(status).to eql(422)
       end
 
       it 'fails on empty message' do
-        post "/plan", params: { message: '', receivers: [{im: 'well_known', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
+        post(
+          "/plan",
+          params: { message: '', receivers: [{im: 'well_known', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' },
+          headers: headers
+        )
 
         expect(errors).to include('invalid messsage')
         expect(status).to eql(422)
       end
 
       it 'fails on invalid identifier' do
-        post "/plan", params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'invalid_identifier'}, {im: 'other', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' }
+        post(
+          "/plan",
+          params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'invalid_identifier'}, {im: 'other', identifier: 'foo'}], send_at: '2018-03-05 12:44:00+00:00' },
+          headers: headers
+        )
 
         expect(errors).to include('invalid identifier')
         expect(status).to eql(422)
@@ -73,14 +112,22 @@ RSpec.describe ApplicationController, type: :request do
     context 'whe params valid' do
 
       it 'response with ok' do
-        post "/plan", params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' }
+        post(
+          "/plan",
+          params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' },
+          headers: headers
+        )
 
         expect(status).to eql(200)
         expect(json_response[:success]).to be_truthy
       end
 
       it 'creates tasks' do
-        post "/plan", params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' }
+        post(
+          "/plan",
+          params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44:00+00:00' },
+          headers: headers
+        )
 
         tasks = SendingWorker.jobs
         expect(tasks.size).to eql(2)
