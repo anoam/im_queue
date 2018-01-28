@@ -10,10 +10,7 @@ RSpec.describe ApplicationController, type: :controller do
   }
 
   after do # clear
-    REDIS_POOL.with do |conn|
-      conn.del :messages
-    end
-    # TODO: clear sidekiq
+
   end
 
   describe '#POST plan' do
@@ -63,6 +60,7 @@ RSpec.describe ApplicationController, type: :controller do
     end
 
     context 'whe params valid' do
+
       it 'response with ok' do
         post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44' }
 
@@ -70,21 +68,16 @@ RSpec.describe ApplicationController, type: :controller do
         expect(json_response[:success]).to be_truthy
       end
 
-      it 'creates entity' do
-        REDIS_POOL.with do |redis|
-          expect do
-            post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44' }
-          end.to change { redis.hlen(:messages) }.from(0).to(1)
-        end
-      end
-
       it 'creates tasks' do
         # post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44' }
 
-        # tasks = SendingWorker.tasks
-        # expect(tasks.size).to eql(1)
+        # tasks = SendingWorker.jobs
+        # expect(tasks.size).to eql(2)
         #
         # expect(tasks.first["at"]).to eql(1520243040.0) # Time.parse('2018-03-05 12:44').to_f
+        # expect(tasks.first["args"]).to eql(['other', 'foo', 'Hello there!'])
+        # expect(tasks.second["at"]).to eql(1520243040.0) # Time.parse('2018-03-05 12:44').to_f
+        # expect(tasks.second["args"]).to eql(['other', 'bar', 'Hello there!'])
       end
 
     end

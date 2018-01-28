@@ -14,7 +14,6 @@ gem 'puma', '~> 3.7'
 # Use Redis adapter
 gem 'redis', '~> 4.0.1'
 gem 'redis-namespace', '~> 1.6.0'
-gem 'connection_pool', '~> 2.2.1'
 
 # Sidekiq for background jobs
 gem 'sidekiq', '~> 5.0.5'

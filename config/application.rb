@@ -31,7 +31,6 @@ module ImQueue
     config.api_only = true
 
     config.eager_load_paths << Rails.root.join('app/workers')
-    config.eager_load_paths << Rails.root.join('app/entities')
     config.eager_load_paths << Rails.root.join('app/services')
   end
 end
