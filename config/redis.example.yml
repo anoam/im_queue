@@ -1,0 +1,13 @@
+development:
+  connection_string: 'redis://127.0.0.1:6379'
+  namespace: 'dev'
+
+
+test:
+  connection_string: 'redis://127.0.0.1:6379'
+  namespace: 'test'
+
+production:
+  connection_string: 'redis://127.0.0.1:6379'
+  client_pool: 7 # client workers count + 2
+  server_pool: 27 # server workers count + 2
