@@ -4,7 +4,16 @@ class PlanningService
     errors = validate(params)
     return errors if errors.any?
 
-    # create task
+    params[:receivers].each do |receiver_data|
+      send_queue.perform_in(
+        Time.parse(params[:send_at]),
+       receiver_data[:im],
+        receiver_data[:identifier],
+        params[:message]
+      )
+    end
+
+    nil
   end
 
   private
@@ -39,5 +48,9 @@ class PlanningService
 
   def im_collection
     @im_collection ||= ImCollection.new
+  end
+
+  def send_queue
+    SendingWorker
   end
 end

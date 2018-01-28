@@ -7,9 +7,13 @@ class ApplicationController < ActionController::API
     end
 
     errors = planning_service.plan(params)
+
     unless errors.nil?
       render json: { errors: errors }, status: :unprocessable_entity
+      return
     end
+
+    render json: { success: true }
   end
 
   private

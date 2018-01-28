@@ -19,7 +19,7 @@ RSpec.describe ApplicationController, type: :controller do
   end
 
   after do # clear
-    # SendingWorker.jobs.clear
+    SendingWorker.jobs.clear
   end
 
   describe '#POST plan' do
@@ -78,15 +78,15 @@ RSpec.describe ApplicationController, type: :controller do
       end
 
       it 'creates tasks' do
-        # post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44' }
+        post :plan, params: { message: 'Hello there!', receivers: [{im: 'well_known', identifier: 'foo'}, {im: 'other', identifier: 'bar'}], send_at: '2018-03-05 12:44' }
 
-        # tasks = SendingWorker.jobs
-        # expect(tasks.size).to eql(2)
-        #
-        # expect(tasks.first["at"]).to eql(1520243040.0) # Time.parse('2018-03-05 12:44').to_f
-        # expect(tasks.first["args"]).to eql(['other', 'foo', 'Hello there!'])
-        # expect(tasks.second["at"]).to eql(1520243040.0) # Time.parse('2018-03-05 12:44').to_f
-        # expect(tasks.second["args"]).to eql(['other', 'bar', 'Hello there!'])
+        tasks = SendingWorker.jobs
+        expect(tasks.size).to eql(2)
+
+        expect(tasks.first["at"]).to eql(1520243040.0) # Time.parse('2018-03-05 12:44').to_f
+        expect(tasks.first["args"]).to eql(['well_known', 'foo', 'Hello there!'])
+        expect(tasks.second["at"]).to eql(1520243040.0) # Time.parse('2018-03-05 12:44').to_f
+        expect(tasks.second["args"]).to eql(['other', 'bar', 'Hello there!'])
       end
 
     end
