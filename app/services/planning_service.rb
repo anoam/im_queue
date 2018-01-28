@@ -1,19 +1,15 @@
 class PlanningService
-  def plan(params)
 
-    errors = validate_parameters(params)
+  def plan(params)
+    errors = validate(params)
     return errors if errors.any?
 
-
-    # check IMs and identities
-
-    # create
+    # create task
   end
 
   private
 
-
-  def validate_parameters(params)
+  def validate(params)
     errors = []
 
     errors.push('invalid messsage') unless params[:message].present?
@@ -23,11 +19,25 @@ class PlanningService
       errors.push('invalid send time')
     end
 
+    errors + validate_receivers(params[:receivers])
+  end
 
-    errors
+  def validate_receivers(receivers)
+    errors = []
+    receivers.each do |receiver|
+      messenger = im_collection.messenger(receiver[:im])
+      if messenger.nil?
+        errors.push('invalid IM')
+        break
+      end
+
+      errors.push('invalid identifier') unless messenger.identifier_valid?(receiver[:identifier])
+    end
+
+    errors.uniq
   end
 
   def im_collection
-
+    @im_collection ||= ImCollection.new
   end
 end

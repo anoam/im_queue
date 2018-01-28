@@ -5,12 +5,21 @@ RSpec.describe ApplicationController, type: :controller do
   let(:errors) { json_response[:errors] }
   let(:status) { response.status }
 
-  before {
-    # TODO: stub IMs here
-  }
+  before do
+    messenger_1 = double
+    messenger_2 = double
+
+    allow_any_instance_of(ImCollection).to receive(:messenger).and_return(nil)
+    allow_any_instance_of(ImCollection).to receive(:messenger).with('well_known').and_return(messenger_1)
+    allow_any_instance_of(ImCollection).to receive(:messenger).with('other').and_return(messenger_2)
+
+    allow(messenger_1).to receive(:identifier_valid?).and_return(true)
+    allow(messenger_2).to receive(:identifier_valid?).and_return(true)
+    allow(messenger_1).to receive(:identifier_valid?).with('invalid_identifier').and_return(false)
+  end
 
   after do # clear
-
+    # SendingWorker.jobs.clear
   end
 
   describe '#POST plan' do
