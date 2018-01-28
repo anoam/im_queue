@@ -1,5 +1,8 @@
-class ApplicationController < ActionController::API
+# frozen_string_literal: true
 
+# main controller
+class ApplicationController < ActionController::API
+  # Add message to send queue
   def plan
     unless form.valid?
       render json: { errors: ['invalid data'] }, status: :bad_request

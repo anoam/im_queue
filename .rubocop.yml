@@ -1,0 +1,18 @@
+AllCops:
+  TargetRubyVersion: 2.5
+  Exclude:
+    - spec/**/*
+    - config/**/*
+    - bin/**/*
+    - Gemfile
+    - Rakefile
+    - config.ru
+
+Metrics/LineLength:
+  Max: 120
+Style/Documentation:
+  Enabled: false
+Rails:
+  Enabled: true
+Style/ClassAndModuleChildren:
+  Enabled: false
